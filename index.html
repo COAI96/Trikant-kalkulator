@@ -26,19 +26,14 @@ body {
   text-align:center;
 }
 
-h2 {
-  margin-bottom: 5px;
-}
-
 #info {
-  font-size: 14px;
-  margin-bottom: 10px;
-  color: #333;
+  font-size:14px;
+  margin-bottom:10px;
+  color:#333;
 }
 
-/* Input-felt */
 .inputs input {
-  width: 80%;
+  width:80%;
   padding:10px;
   margin:6px auto;
   border-radius:8px;
@@ -48,7 +43,6 @@ h2 {
   font-size:16px;
 }
 
-/* Knapper */
 button {
   width:100%;
   padding:12px;
@@ -61,21 +55,14 @@ button {
   cursor:pointer;
 }
 
-button.clear {
-  background:#f44336;
-}
-
-button.dark {
-  background:#444;
-  margin-bottom:10px;
-}
+button.clear { background:#f44336; }
+button.dark { background:#444; margin-bottom:10px; }
 
 #result {
   margin-top:10px;
   font-weight:bold;
 }
 
-/* Trekantskisse */
 svg {
   width:100%;
   height:200px;
@@ -87,36 +74,13 @@ body.dark {
   background: linear-gradient(135deg,#111,#333);
 }
 
-body.dark .calculator {
-  background:#222;
-  color:white;
-}
-
-body.dark input {
-  background:#333;
-  color:white;
-  border:1px solid #555;
-}
-
-body.dark #info {
-  color:#ccc;
-}
-
-body.dark #result {
-  color:#0f0;
-}
-
-body.dark button {
-  background:#555;
-}
-
-body.dark button.clear {
-  background:#f44336;
-}
-
-body.dark button.dark {
-  background:#888;
-}
+body.dark .calculator { background:#222; color:white; }
+body.dark input { background:#333; color:white; border:1px solid #555; }
+body.dark #info { color:#ccc; }
+body.dark #result { color:#0f0; }
+body.dark button { background:#555; }
+body.dark button.clear { background:#f44336; }
+body.dark button.dark { background:#888; }
 </style>
 </head>
 
@@ -129,7 +93,7 @@ body.dark button.dark {
 <h2>Trekantkalkulator</h2>
 
 <p id="info">
-  Fyll inn minst <b>3 verdier</b> (sider og/eller vinkler), så beregnes resten automatisk.
+Fyll inn minst <b>3 verdier</b> (sider og/eller vinkler), så beregnes resten automatisk.
 </p>
 
 <div class="inputs">
@@ -162,40 +126,60 @@ function toggleDarkMode() {
 }
 
 function solveTriangle() {
-  let a = parseFloat(document.getElementById("a").value);
-  let b = parseFloat(document.getElementById("b").value);
-  let c = parseFloat(document.getElementById("c").value);
-  let A = parseFloat(document.getElementById("A").value);
-  let B = parseFloat(document.getElementById("B").value);
-  let C = parseFloat(document.getElementById("C").value);
+  let a = parseFloat(aInput.value);
+  let b = parseFloat(bInput.value);
+  let c = parseFloat(cInput.value);
+  let A = parseFloat(AInput.value);
+  let B = parseFloat(BInput.value);
+  let C = parseFloat(CInput.value);
 
   let count = [a,b,c,A,B,C].filter(x => !isNaN(x)).length;
-
   if (count < 3) {
     result.innerText = "Du må fylle inn minst 3 verdier.";
     return;
   }
 
-  // SSS (3 sider)
+  // SSS
   if (!isNaN(a) && !isNaN(b) && !isNaN(c)) {
     A = cosRule(a,b,c);
     B = cosRule(b,c,a);
     C = 180 - A - B;
   }
 
-  // ASA / AAS (2 vinkler + 1 side)
-  if (!isNaN(A) && !isNaN(B) && !isNaN(a)) {
-    C = 180 - A - B;
-    b = a * Math.sin(B*Math.PI/180) / Math.sin(A*Math.PI/180);
-    c = a * Math.sin(C*Math.PI/180) / Math.sin(A*Math.PI/180);
+  // SAS: a, b og C
+  if (!isNaN(a) && !isNaN(b) && !isNaN(C)) {
+    c = Math.sqrt(a*a + b*b - 2*a*b*Math.cos(toRad(C)));
+    A = sinRule(a,c,C);
+    B = 180 - A - C;
   }
 
-  document.getElementById("a").value = round(a);
-  document.getElementById("b").value = round(b);
-  document.getElementById("c").value = round(c);
-  document.getElementById("A").value = round(A);
-  document.getElementById("B").value = round(B);
-  document.getElementById("C").value = round(C);
+  // SAS: a, c og B
+  if (!isNaN(a) && !isNaN(c) && !isNaN(B)) {
+    b = Math.sqrt(a*a + c*c - 2*a*c*Math.cos(toRad(B)));
+    A = sinRule(a,b,B);
+    C = 180 - A - B;
+  }
+
+  // SAS: b, c og A
+  if (!isNaN(b) && !isNaN(c) && !isNaN(A)) {
+    a = Math.sqrt(b*b + c*c - 2*b*c*Math.cos(toRad(A)));
+    B = sinRule(b,a,A);
+    C = 180 - A - B;
+  }
+
+  // ASA / AAS
+  if (!isNaN(A) && !isNaN(B) && !isNaN(a)) {
+    C = 180 - A - B;
+    b = a * Math.sin(toRad(B)) / Math.sin(toRad(A));
+    c = a * Math.sin(toRad(C)) / Math.sin(toRad(A));
+  }
+
+  aInput.value = a ?? "";
+  bInput.value = b ?? "";
+  cInput.value = c ?? "";
+  AInput.value = A ?? "";
+  BInput.value = B ?? "";
+  CInput.value = C ?? "";
 
   result.innerText = "Alle verdier er nå beregnet.";
 }
@@ -204,14 +188,26 @@ function cosRule(x,y,z) {
   return Math.acos((x*x + y*y - z*z) / (2*x*y)) * 180/Math.PI;
 }
 
-function round(x) {
-  return x ? x.toFixed(2) : "";
+function sinRule(x,y,Z) {
+  return Math.asin(x * Math.sin(toRad(Z)) / y) * 180/Math.PI;
+}
+
+function toRad(deg) {
+  return deg * Math.PI / 180;
 }
 
 function clearAll() {
   ["a","b","c","A","B","C"].forEach(id => document.getElementById(id).value="");
   result.innerText="";
 }
+
+const aInput = document.getElementById("a");
+const bInput = document.getElementById("b");
+const cInput = document.getElementById("c");
+const AInput = document.getElementById("A");
+const BInput = document.getElementById("B");
+const CInput = document.getElementById("C");
+const result = document.getElementById("result");
 </script>
 
 </body>
