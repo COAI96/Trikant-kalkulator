@@ -21,7 +21,7 @@ body {
   padding:20px;
   border-radius:15px;
   width:90%;
-  max-width:400px;
+  max-width:420px;
   box-shadow:0 10px 20px rgba(0,0,0,0.2);
   text-align:center;
 }
@@ -29,7 +29,6 @@ body {
 #info {
   font-size:14px;
   margin-bottom:10px;
-  color:#333;
 }
 
 .inputs input {
@@ -56,7 +55,7 @@ button {
 }
 
 button.clear { background:#f44336; }
-button.dark { background:#444; margin-bottom:10px; }
+button.dark { background:#444; }
 
 #result {
   margin-top:10px;
@@ -65,7 +64,7 @@ button.dark { background:#444; margin-bottom:10px; }
 
 svg {
   width:100%;
-  height:200px;
+  height:240px;
   margin-top:10px;
 }
 
@@ -73,7 +72,6 @@ svg {
 body.dark {
   background: linear-gradient(135deg,#111,#333);
 }
-
 body.dark .calculator { background:#222; color:white; }
 body.dark input { background:#333; color:white; border:1px solid #555; }
 body.dark #info { color:#ccc; }
@@ -111,96 +109,19 @@ Fyll inn minst <b>3 verdier</b> (sider og/eller vinkler), så beregnes resten au
 
 <div id="result"></div>
 
-<svg viewBox="0 0 200 160">
-  <polygon points="40,140 160,140 100,30" fill="none" stroke="black" stroke-width="2"/>
-  <text x="30" y="150">A</text>
-  <text x="165" y="150">B</text>
-  <text x="95" y="20">C</text>
+<svg viewBox="0 0 300 220">
+  <polygon id="triangle" fill="none" stroke="black" stroke-width="2"/>
+  <text id="labelA"></text>
+  <text id="labelB"></text>
+  <text id="labelC"></text>
+  <text id="sidea"></text>
+  <text id="sideb"></text>
+  <text id="sidec"></text>
 </svg>
 
 </div>
 
 <script>
-function toggleDarkMode() {
-  document.body.classList.toggle("dark");
-}
-
-function solveTriangle() {
-  let a = parseFloat(aInput.value);
-  let b = parseFloat(bInput.value);
-  let c = parseFloat(cInput.value);
-  let A = parseFloat(AInput.value);
-  let B = parseFloat(BInput.value);
-  let C = parseFloat(CInput.value);
-
-  let count = [a,b,c,A,B,C].filter(x => !isNaN(x)).length;
-  if (count < 3) {
-    result.innerText = "Du må fylle inn minst 3 verdier.";
-    return;
-  }
-
-  // SSS
-  if (!isNaN(a) && !isNaN(b) && !isNaN(c)) {
-    A = cosRule(a,b,c);
-    B = cosRule(b,c,a);
-    C = 180 - A - B;
-  }
-
-  // SAS: a, b og C
-  if (!isNaN(a) && !isNaN(b) && !isNaN(C)) {
-    c = Math.sqrt(a*a + b*b - 2*a*b*Math.cos(toRad(C)));
-    A = sinRule(a,c,C);
-    B = 180 - A - C;
-  }
-
-  // SAS: a, c og B
-  if (!isNaN(a) && !isNaN(c) && !isNaN(B)) {
-    b = Math.sqrt(a*a + c*c - 2*a*c*Math.cos(toRad(B)));
-    A = sinRule(a,b,B);
-    C = 180 - A - B;
-  }
-
-  // SAS: b, c og A
-  if (!isNaN(b) && !isNaN(c) && !isNaN(A)) {
-    a = Math.sqrt(b*b + c*c - 2*b*c*Math.cos(toRad(A)));
-    B = sinRule(b,a,A);
-    C = 180 - A - B;
-  }
-
-  // ASA / AAS
-  if (!isNaN(A) && !isNaN(B) && !isNaN(a)) {
-    C = 180 - A - B;
-    b = a * Math.sin(toRad(B)) / Math.sin(toRad(A));
-    c = a * Math.sin(toRad(C)) / Math.sin(toRad(A));
-  }
-
-  aInput.value = a ?? "";
-  bInput.value = b ?? "";
-  cInput.value = c ?? "";
-  AInput.value = A ?? "";
-  BInput.value = B ?? "";
-  CInput.value = C ?? "";
-
-  result.innerText = "Alle verdier er nå beregnet.";
-}
-
-function cosRule(x,y,z) {
-  return Math.acos((x*x + y*y - z*z) / (2*x*y)) * 180/Math.PI;
-}
-
-function sinRule(x,y,Z) {
-  return Math.asin(x * Math.sin(toRad(Z)) / y) * 180/Math.PI;
-}
-
-function toRad(deg) {
-  return deg * Math.PI / 180;
-}
-
-function clearAll() {
-  ["a","b","c","A","B","C"].forEach(id => document.getElementById(id).value="");
-  result.innerText="";
-}
-
 const aInput = document.getElementById("a");
 const bInput = document.getElementById("b");
 const cInput = document.getElementById("c");
@@ -208,6 +129,178 @@ const AInput = document.getElementById("A");
 const BInput = document.getElementById("B");
 const CInput = document.getElementById("C");
 const result = document.getElementById("result");
+
+function toggleDarkMode() {
+  document.body.classList.toggle("dark");
+}
+
+function toRad(d){ return d*Math.PI/180; }
+function toDeg(r){ return r*180/Math.PI; }
+
+function cosRule(x,y,z){
+  return toDeg(Math.acos((x*x+y*y-z*z)/(2*x*y)));
+}
+function sinRule(x,y,Z){
+  return toDeg(Math.asin(x*Math.sin(toRad(Z))/y));
+}
+
+function format(x){
+  return Number(x).toFixed(4);
+}
+
+function lockInputs(){
+  [aInput,bInput,cInput,AInput,BInput,CInput].forEach(i=>i.disabled=true);
+}
+
+function unlockInputs(){
+  [aInput,bInput,cInput,AInput,BInput,CInput].forEach(i=>i.disabled=false);
+}
+
+function drawTriangle(a,b,c,A,B,C){
+  // Skaler sidene for SVG
+  let scale = 180 / Math.max(a,b,c);
+
+  let Ax = 50;
+  let Ay = 180;
+
+  let Bx = Ax + a * scale;
+  let By = Ay;
+
+  let Cx = Ax + b * scale * Math.cos(toRad(A));
+  let Cy = Ay - b * scale * Math.sin(toRad(A));
+
+  const triangle = document.getElementById("triangle");
+  triangle.setAttribute("points", `${Ax},${Ay} ${Bx},${By} ${Cx},${Cy}`);
+
+  document.getElementById("labelA").setAttribute("x", Ax-15);
+  document.getElementById("labelA").setAttribute("y", Ay+15);
+  document.getElementById("labelA").textContent = "A="+format(A)+"°";
+
+  document.getElementById("labelB").setAttribute("x", Bx+5);
+  document.getElementById("labelB").setAttribute("y", By+15);
+  document.getElementById("labelB").textContent = "B="+format(B)+"°";
+
+  document.getElementById("labelC").setAttribute("x", Cx-10);
+  document.getElementById("labelC").setAttribute("y", Cy-10);
+  document.getElementById("labelC").textContent = "C="+format(C)+"°";
+
+  document.getElementById("sidea").setAttribute("x", (Ax+Bx)/2);
+  document.getElementById("sidea").setAttribute("y", Ay+30);
+  document.getElementById("sidea").textContent = "a="+format(a);
+
+  document.getElementById("sideb").setAttribute("x", (Ax+Cx)/2 - 10);
+  document.getElementById("sideb").setAttribute("y", (Ay+Cy)/2);
+  document.getElementById("sideb").textContent = "b="+format(b);
+
+  document.getElementById("sidec").setAttribute("x", (Bx+Cx)/2 + 5);
+  document.getElementById("sidec").setAttribute("y", (By+Cy)/2);
+  document.getElementById("sidec").textContent = "c="+format(c);
+}
+
+function solveTriangle(){
+
+  if (aInput.disabled) {
+    result.innerText = "Trykk 'Slett alt' for å gjøre en ny beregning.";
+    return;
+  }
+
+  let a = parseFloat(aInput.value);
+  let b = parseFloat(bInput.value);
+  let c = parseFloat(cInput.value);
+  let A = parseFloat(AInput.value);
+  let B = parseFloat(BInput.value);
+  let C = parseFloat(CInput.value);
+
+  let count = [a,b,c,A,B,C].filter(x=>!isNaN(x)).length;
+  if(count < 3){
+    result.innerText="Du må fylle inn minst 3 verdier.";
+    return;
+  }
+
+  let solved=false;
+
+  // SSS
+  if(!isNaN(a)&&!isNaN(b)&&!isNaN(c)){
+    if(a+b<=c || a+c<=b || b+c<=a){
+      result.innerText="Ugyldig trekant.";
+      return;
+    }
+    A=cosRule(a,b,c);
+    B=cosRule(b,c,a);
+    C=180-A-B;
+    solved=true;
+  }
+
+  // SAS
+  else if(!isNaN(a)&&!isNaN(b)&&!isNaN(C)){
+    c=Math.sqrt(a*a+b*b-2*a*b*Math.cos(toRad(C)));
+    A=sinRule(a,c,C);
+    B=180-A-C;
+    solved=true;
+  }
+  else if(!isNaN(a)&&!isNaN(c)&&!isNaN(B)){
+    b=Math.sqrt(a*a+c*c-2*a*c*Math.cos(toRad(B)));
+    A=sinRule(a,b,B);
+    C=180-A-B;
+    solved=true;
+  }
+  else if(!isNaN(b)&&!isNaN(c)&&!isNaN(A)){
+    a=Math.sqrt(b*b+c*c-2*b*c*Math.cos(toRad(A)));
+    B=sinRule(b,a,A);
+    C=180-A-B;
+    solved=true;
+  }
+
+  // ASA / AAS
+  else if(!isNaN(A)&&!isNaN(B)&&!isNaN(a)){
+    C=180-A-B;
+    b=a*Math.sin(toRad(B))/Math.sin(toRad(A));
+    c=a*Math.sin(toRad(C))/Math.sin(toRad(A));
+    solved=true;
+  }
+  else if(!isNaN(A)&&!isNaN(C)&&!isNaN(a)){
+    B=180-A-C;
+    b=a*Math.sin(toRad(B))/Math.sin(toRad(A));
+    c=a*Math.sin(toRad(C))/Math.sin(toRad(A));
+    solved=true;
+  }
+  else if(!isNaN(B)&&!isNaN(C)&&!isNaN(b)){
+    A=180-B-C;
+    a=b*Math.sin(toRad(A))/Math.sin(toRad(B));
+    c=b*Math.sin(toRad(C))/Math.sin(toRad(B));
+    solved=true;
+  }
+
+  if(!solved){
+    result.innerText="Denne kombinasjonen kan ikke løses.";
+    return;
+  }
+
+  aInput.value=a;
+  bInput.value=b;
+  cInput.value=c;
+  AInput.value=A;
+  BInput.value=B;
+  CInput.value=C;
+
+  drawTriangle(a,b,c,A,B,C);
+  lockInputs();
+  result.innerText="Alle verdier er nå beregnet.";
+}
+
+function clearAll(){
+  unlockInputs();
+  [aInput,bInput,cInput,AInput,BInput,CInput].forEach(i=>i.value="");
+
+  const triangle = document.getElementById("triangle");
+  triangle.setAttribute("points","");
+
+  ["labelA","labelB","labelC","sidea","sideb","sidec"].forEach(id=>{
+    document.getElementById(id).textContent="";
+  });
+
+  result.innerText="";
+}
 </script>
 
 </body>
